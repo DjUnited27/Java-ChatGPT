@@ -1,0 +1,271 @@
+import android.app.AlarmManager;
+import android.app.AlertDialog;
+import android.app.Notification;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Bundle;
+import android.os.SystemClock;
+import android.text.InputType;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+
+public class MainActivity extends AppCompatActivity {
+
+    private static final String TAG = MainActivity.class.getSimpleName();
+
+    private static final String PREFS_NAME = "MyPrefsFile";
+    private static final String PREF_PASSWORD = "password";
+
+    private static final int REQUEST_CODE_SET_PASSWORD = 1;
+    private static final int REQUEST_CODE_CONFIRM_PASSWORD = 2;
+
+    private String mPassword;
+    private boolean mUseFingerprint = false;
+
+    private ListView mBirthdaysListView;
+    private BirthdaysListAdapter mBirthdaysListAdapter;
+
+    private ListView mTasksListView;
+    private TasksListAdapter mTasksListAdapter;
+    private ArrayList<Task> mTasksList = new ArrayList<>();
+
+    private EditText mEmailEditText;
+
+    private SharedPreferences mSharedPreferences;
+    private SharedPreferences.Editor mEditor;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        mSharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        mEditor = mSharedPreferences.edit();
+
+        mPassword = mSharedPreferences.getString(PREF_PASSWORD, null);
+        if (mPassword == null) {
+            Intent intent = new Intent(this, SetPasswordActivity.class);
+            startActivityForResult(intent, REQUEST_CODE_SET_PASSWORD);
+        }
+
+        mBirthdaysListView = findViewById(R.id.birthdays_list);
+        mBirthdaysListAdapter = new BirthdaysListAdapter(this);
+        mBirthdaysListView.setAdapter(mBirthdaysListAdapter);
+
+        mTasksListView = findViewById(R.id.tasks_list);
+        mTasksListAdapter = new TasksListAdapter(this, mTasksList);
+        mTasksListView.setAdapter(mTasksListAdapter);
+
+        loadBirthdays();
+        loadTasks();
+
+        mEmailEditText = findViewById(R.id.email_edit_text);
+
+        Button sendButton = findViewById(R.id.send_button);
+        sendButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String recipient = mEmailEditText.getText().toString().trim();
+                if (TextUtils.isEmpty(recipient)) {
+                    Toast.makeText(MainActivity.this, "Recipient email is required", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                Intent intent = new Intent(Intent.ACTION_SEND);
+                intent.setType("text/plain");
+                intent.putExtra(Intent.EXTRA_EMAIL, new String[]{recipient});
+                intent.putExtra(Intent.EXTRA_SUBJECT, "My Schedule");
+                StringBuilder messageBuilder = new StringBuilder();
+                messageBuilder.append("My Schedule:\n\nBirthdays:\n");
+                for (Birthday birthday : mBirthdaysListAdapter.getBirthdays()) {
+                    messageBuilder.append(birthday.getName()).append(" - ").append(birthday.getDateString()).append("\n");
+                }
+                messageBuilder.append("\n Tasks:\n");
+                for (Task task : mTasksList) {
+                    messageBuilder.append(task.getName()).append(" - ").append(task.getFormattedDueDate()).append("\n");
+                }
+                intent.putExtra(Intent.EXTRA_TEXT, messageBuilder.toString());
+                startActivity(Intent.createChooser(intent, "Choose an email client"));
+            }
+        });
+
+    }
+
+    /**
+     * Load the birthdays into the birthdays list.
+     */
+    private void loadBirthdays() {
+        ArrayList<Birthday> birthdays = new ArrayList<>();
+        birthdays.add(new Birthday("John Doe", "01/01/1970"));
+        birthdays.add(new Birthday("Jane Smith", "02/02/1980"));
+        birthdays.add(new Birthday("Bob Johnson", "03/03/1990"));
+        birthdays.add(new Birthday("Alice Williams", "04/04/2000"));
+        mBirthdaysListAdapter.setBirthdays(birthdays);
+    }
+
+    /**
+     * Load the tasks into the tasks list and schedule a notification for the first task.
+     */
+    private void loadTasks() {
+        mTasksList.add(new Task("Task 1", "01/01/2023"));
+        mTasksList.add(new Task("Task 2", "02/01/2023"));
+        mTasksList.add(new Task("Task 3", "03/01/2023"));
+        mTasksList.add(new Task("Task 4", "04/01/2023"));
+        mTasksListAdapter.notifyDataSetChanged();
+
+// Schedule notification for the first task
+        Task firstTask = mTasksList.get(0);
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy hh:mm a");
+        Date dueDate = null;
+        try {
+            dueDate = dateFormat.parse(firstTask.getDueDate() + " 09:00 AM");
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to parse due date", e);
+        }
+        if (dueDate != null) {
+            scheduleNotification(getNotification(firstTask.getName(), "is due today"), dueDate.getTime());
+        }
+    }
+
+    /**
+     * Schedule a notification to be shown at a specified time.
+     *
+     * @param notification The notification to be shown.
+     * @param delay        The time (in milliseconds) when the notification should be shown.
+     */
+    private void scheduleNotification(android.app.Notification notification, long delay) {
+        Intent notificationIntent = new Intent(this, NotificationPublisher.class);
+        notificationIntent.putExtra(NotificationPublisher.NOTIFICATION_ID, 1);
+        notificationIntent.putExtra(NotificationPublisher.NOTIFICATION, notification);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        long futureInMillis = SystemClock.elapsedRealtime() + delay;
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, futureInMillis, pendingIntent);
+    }
+
+    /**
+     * Get a notification for a given title and content.
+     *
+     * @param title   The title of the notification.
+     * @param content The content of the notification.
+     * @return The notification.
+     */
+    private android.app.Notification getNotification(String title, String content) {
+        android.app.Notification.Builder builder = new android.app.Notification.Builder(this)
+                .setContentTitle(title)
+                .setContentText(content)
+                .setSmallIcon(R.drawable.ic_launcher_background)
+                .setColor(ContextCompat.getColor(this, R.color.colorPrimary));
+        return builder.build();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK) {
+            switch (requestCode) {
+                case REQUEST_CODE_SET_PASSWORD:
+                    mPassword = data.getStringExtra(SetPasswordActivity.EXTRA_PASSWORD);
+                    if (mPassword != null) {
+                        mEditor.putString(PREF_PASSWORD, mPassword);
+                        mEditor.apply();
+                    }
+                    break;
+                case REQUEST_CODE_UNLOCK:
+                    String enteredPassword = data.getStringExtra(UnlockActivity.EXTRA_PASSWORD);
+                    if (enteredPassword.equals(mPassword)) {
+                        unlockApp();
+                    } else {
+                        Toast.makeText(this, R.string.wrong_password_message, Toast.LENGTH_SHORT).show();
+                    }
+                    break;
+            }
+        }
+    }
+
+    // method to unlock the app
+    private void unlockApp() {
+        mIsLocked = false;
+        mUnlockButton.setVisibility(View.GONE);
+        mMainContent.setVisibility(View.VISIBLE);
+    }
+
+    // Handle password verification
+    private void handlePasswordVerification() {
+        // Get the saved password from SharedPreferences
+        String savedPassword = mPrefs.getString(PREF_PASSWORD, null);
+
+        // If there is no saved password, show the SetPasswordActivity
+        if (savedPassword == null) {
+            Intent intent = new Intent(MainActivity.this, SetPasswordActivity.class);
+            startActivityForResult(intent, REQUEST_CODE_SET_PASSWORD);
+        } else {
+            // Show the password verification dialog
+            showPasswordVerificationDialog(savedPassword);
+        }
+    }
+
+    // Show the password verification dialog
+    private void showPasswordVerificationDialog(final String savedPassword) {
+        // Build the dialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.enter_password_title);
+
+        // Add the password input field
+        final EditText passwordInput = new EditText(this);
+        passwordInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        builder.setView(passwordInput);
+
+        // Add the OK button
+        builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                String enteredPassword = passwordInput.getText().toString();
+                if (enteredPassword.equals(savedPassword)) {
+                    unlockApp();
+                } else {
+                    Toast.makeText(MainActivity.this, R.string.wrong_password_message, Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        // Add the Cancel button
+        builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // Do nothing
+            }
+        });
+
+        // Create and show the dialog
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+}
