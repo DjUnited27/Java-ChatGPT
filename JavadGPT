@@ -1,271 +1,357 @@
-import android.app.AlarmManager;
-import android.app.AlertDialog;
-import android.app.Notification;
-import android.app.PendingIntent;
+package com.example.chatgptprojectappv11;
+
+import static android.content.ContentValues.TAG;
+
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.os.SystemClock;
+import android.text.Editable;
 import android.text.InputType;
-import android.text.TextUtils;
+import android.text.TextWatcher;
+import android.text.method.DigitsKeyListener;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.core.content.ContextCompat;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
+import java.util.List;
+import java.util.Scanner;
 
-public class MainActivity extends AppCompatActivity {
+public class BirthdayListActivity extends AppCompatActivity {
 
-    private static final String TAG = MainActivity.class.getSimpleName();
 
-    private static final String PREFS_NAME = "MyPrefsFile";
-    private static final String PREF_PASSWORD = "password";
-
-    private static final int REQUEST_CODE_SET_PASSWORD = 1;
-    private static final int REQUEST_CODE_CONFIRM_PASSWORD = 2;
-
-    private String mPassword;
-    private boolean mUseFingerprint = false;
-
-    private ListView mBirthdaysListView;
-    private BirthdaysListAdapter mBirthdaysListAdapter;
-
-    private ListView mTasksListView;
-    private TasksListAdapter mTasksListAdapter;
-    private ArrayList<Task> mTasksList = new ArrayList<>();
-
-    private EditText mEmailEditText;
-
-    private SharedPreferences mSharedPreferences;
-    private SharedPreferences.Editor mEditor;
-
+    private static final String BIRTHDAYS_FILENAME = "birthdays.txt";
+    private EditText editTextName, editTextSurname, editTextCompany, editTextBirthday;
+    private Context context;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_birthday_list);
 
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        editTextName = findViewById(R.id.edit_text_name);
+        editTextSurname = findViewById(R.id.edit_text_surname);
+        editTextCompany = findViewById(R.id.edit_text_company);
+        editTextBirthday = findViewById(R.id.edit_text_birthday);
+        context = this;
 
-        mSharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        mEditor = mSharedPreferences.edit();
+        // Установить формат даты для editTextBirthday
+        SimpleDateFormat format = new SimpleDateFormat("dd.MM.yyyy");
+        editTextBirthday.setInputType(InputType.TYPE_CLASS_DATETIME);
+        editTextBirthday.setKeyListener(DigitsKeyListener.getInstance("0123456789."));
+        editTextBirthday.addTextChangedListener(new TextWatcher() {
+            private String current = "";
+            private String ddmmyyyy = "DDMMYYYY";
+            private Calendar cal = Calendar.getInstance();
 
-        mPassword = mSharedPreferences.getString(PREF_PASSWORD, null);
-        if (mPassword == null) {
-            Intent intent = new Intent(this, SetPasswordActivity.class);
-            startActivityForResult(intent, REQUEST_CODE_SET_PASSWORD);
-        }
-
-        mBirthdaysListView = findViewById(R.id.birthdays_list);
-        mBirthdaysListAdapter = new BirthdaysListAdapter(this);
-        mBirthdaysListView.setAdapter(mBirthdaysListAdapter);
-
-        mTasksListView = findViewById(R.id.tasks_list);
-        mTasksListAdapter = new TasksListAdapter(this, mTasksList);
-        mTasksListView.setAdapter(mTasksListAdapter);
-
-        loadBirthdays();
-        loadTasks();
-
-        mEmailEditText = findViewById(R.id.email_edit_text);
-
-        Button sendButton = findViewById(R.id.send_button);
-        sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                String recipient = mEmailEditText.getText().toString().trim();
-                if (TextUtils.isEmpty(recipient)) {
-                    Toast.makeText(MainActivity.this, "Recipient email is required", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                Intent intent = new Intent(Intent.ACTION_SEND);
-                intent.setType("text/plain");
-                intent.putExtra(Intent.EXTRA_EMAIL, new String[]{recipient});
-                intent.putExtra(Intent.EXTRA_SUBJECT, "My Schedule");
-                StringBuilder messageBuilder = new StringBuilder();
-                messageBuilder.append("My Schedule:\n\nBirthdays:\n");
-                for (Birthday birthday : mBirthdaysListAdapter.getBirthdays()) {
-                    messageBuilder.append(birthday.getName()).append(" - ").append(birthday.getDateString()).append("\n");
-                }
-                messageBuilder.append("\n Tasks:\n");
-                for (Task task : mTasksList) {
-                    messageBuilder.append(task.getName()).append(" - ").append(task.getFormattedDueDate()).append("\n");
-                }
-                intent.putExtra(Intent.EXTRA_TEXT, messageBuilder.toString());
-                startActivity(Intent.createChooser(intent, "Choose an email client"));
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
             }
-        });
 
-    }
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (!s.toString().equals(current)) {
+                    String clean = s.toString().replaceAll("[^\\d.]|\\.", "");
+                    String cleanC = current.replaceAll("[^\\d.]|\\.", "");
 
-    /**
-     * Load the birthdays into the birthdays list.
-     */
-    private void loadBirthdays() {
-        ArrayList<Birthday> birthdays = new ArrayList<>();
-        birthdays.add(new Birthday("John Doe", "01/01/1970"));
-        birthdays.add(new Birthday("Jane Smith", "02/02/1980"));
-        birthdays.add(new Birthday("Bob Johnson", "03/03/1990"));
-        birthdays.add(new Birthday("Alice Williams", "04/04/2000"));
-        mBirthdaysListAdapter.setBirthdays(birthdays);
-    }
-
-    /**
-     * Load the tasks into the tasks list and schedule a notification for the first task.
-     */
-    private void loadTasks() {
-        mTasksList.add(new Task("Task 1", "01/01/2023"));
-        mTasksList.add(new Task("Task 2", "02/01/2023"));
-        mTasksList.add(new Task("Task 3", "03/01/2023"));
-        mTasksList.add(new Task("Task 4", "04/01/2023"));
-        mTasksListAdapter.notifyDataSetChanged();
-
-// Schedule notification for the first task
-        Task firstTask = mTasksList.get(0);
-        SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy hh:mm a");
-        Date dueDate = null;
-        try {
-            dueDate = dateFormat.parse(firstTask.getDueDate() + " 09:00 AM");
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to parse due date", e);
-        }
-        if (dueDate != null) {
-            scheduleNotification(getNotification(firstTask.getName(), "is due today"), dueDate.getTime());
-        }
-    }
-
-    /**
-     * Schedule a notification to be shown at a specified time.
-     *
-     * @param notification The notification to be shown.
-     * @param delay        The time (in milliseconds) when the notification should be shown.
-     */
-    private void scheduleNotification(android.app.Notification notification, long delay) {
-        Intent notificationIntent = new Intent(this, NotificationPublisher.class);
-        notificationIntent.putExtra(NotificationPublisher.NOTIFICATION_ID, 1);
-        notificationIntent.putExtra(NotificationPublisher.NOTIFICATION, notification);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-        long futureInMillis = SystemClock.elapsedRealtime() + delay;
-        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, futureInMillis, pendingIntent);
-    }
-
-    /**
-     * Get a notification for a given title and content.
-     *
-     * @param title   The title of the notification.
-     * @param content The content of the notification.
-     * @return The notification.
-     */
-    private android.app.Notification getNotification(String title, String content) {
-        android.app.Notification.Builder builder = new android.app.Notification.Builder(this)
-                .setContentTitle(title)
-                .setContentText(content)
-                .setSmallIcon(R.drawable.ic_launcher_background)
-                .setColor(ContextCompat.getColor(this, R.color.colorPrimary));
-        return builder.build();
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == RESULT_OK) {
-            switch (requestCode) {
-                case REQUEST_CODE_SET_PASSWORD:
-                    mPassword = data.getStringExtra(SetPasswordActivity.EXTRA_PASSWORD);
-                    if (mPassword != null) {
-                        mEditor.putString(PREF_PASSWORD, mPassword);
-                        mEditor.apply();
+                    int cl = clean.length();
+                    int sel = cl;
+                    for (int i = 2; i <= cl && i < 6; i += 2) {
+                        if (clean.charAt(i - 1) != '.') {
+                            clean = clean.substring(0, i - 1) + '.' + clean.substring(i - 1);
+                        }
                     }
-                    break;
-                case REQUEST_CODE_UNLOCK:
-                    String enteredPassword = data.getStringExtra(UnlockActivity.EXTRA_PASSWORD);
-                    if (enteredPassword.equals(mPassword)) {
-                        unlockApp();
+
+                    // Процесс форматирования даты с использованием SimpleDateFormat
+                    if (clean.equals(cleanC)) sel--;
+
+                    if (clean.length() < 8) {
+                        clean += ddmmyyyy.substring(clean.length());
                     } else {
-                        Toast.makeText(this, R.string.wrong_password_message, Toast.LENGTH_SHORT).show();
+                        int day = Integer.parseInt(clean.substring(0, 2));
+                        int mon = Integer.parseInt(clean.substring(2, 4));
+                        int year = Integer.parseInt(clean.substring(4, 8));
+
+                        if (mon > 12) mon = 12;
+                        cal.set(Calendar.MONTH, mon - 1);
+                        year = (year < 1900) ? 1900 : (year > 2100) ? 2100 : year;
+                        cal.set(Calendar.YEAR, year);
+
+                        day = (day > cal.getActualMaximum(Calendar.DATE)) ? cal.getActualMaximum(Calendar.DATE) : day;
+                        clean = String.format("%02d.%02d.%04d", day, mon, year);
                     }
-                    break;
-            }
-        }
-    }
 
-    // method to unlock the app
-    private void unlockApp() {
-        mIsLocked = false;
-        mUnlockButton.setVisibility(View.GONE);
-        mMainContent.setVisibility(View.VISIBLE);
-    }
-
-    // Handle password verification
-    private void handlePasswordVerification() {
-        // Get the saved password from SharedPreferences
-        String savedPassword = mPrefs.getString(PREF_PASSWORD, null);
-
-        // If there is no saved password, show the SetPasswordActivity
-        if (savedPassword == null) {
-            Intent intent = new Intent(MainActivity.this, SetPasswordActivity.class);
-            startActivityForResult(intent, REQUEST_CODE_SET_PASSWORD);
-        } else {
-            // Show the password verification dialog
-            showPasswordVerificationDialog(savedPassword);
-        }
-    }
-
-    // Show the password verification dialog
-    private void showPasswordVerificationDialog(final String savedPassword) {
-        // Build the dialog
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle(R.string.enter_password_title);
-
-        // Add the password input field
-        final EditText passwordInput = new EditText(this);
-        passwordInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        builder.setView(passwordInput);
-
-        // Add the OK button
-        builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                String enteredPassword = passwordInput.getText().toString();
-                if (enteredPassword.equals(savedPassword)) {
-                    unlockApp();
-                } else {
-                    Toast.makeText(MainActivity.this, R.string.wrong_password_message, Toast.LENGTH_SHORT).show();
+                    clean = clean.substring(0, Math.min(clean.length(), 10));
+                    sel = Math.max(0, Math.min(sel, clean.length() - 1));
+                    editTextBirthday.setText(clean);
+                    editTextBirthday.setSelection(sel);
+                    current = clean;
                 }
             }
-        });
 
-        // Add the Cancel button
-        builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+
             @Override
-            public void onClick(DialogInterface dialog, int which) {
-                // Do nothing
+            public void afterTextChanged(Editable editable) {
+
             }
         });
-
-        // Create and show the dialog
-        AlertDialog dialog = builder.create();
-        dialog.show();
+    }
+    public void readBirthdays(Context context) {
+        List<Birthday> birthdaysList = new ArrayList<>();
+        try (Scanner scanner = new Scanner(new File(context.getFilesDir(), BIRTHDAYS_FILENAME))) {
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine();
+                String[] parts = line.split(",");
+                String name = parts[0];
+                String date = parts[1];
+                birthdaysList.add(new Birthday(name, date));
+            }
+        } catch (IOException e) {
+            Toast.makeText(context, "Ошибка чтения файла", Toast.LENGTH_SHORT).show();
+            Log.e(TAG, "readBirthdays: Ошибка чтения файла", e);
+        }
     }
 
-}
+    public void addBirthday(Context context, EditText nameEditText, EditText birthdateEditText) {
+        String name = nameEditText.getText().toString();
+        String birthdate = birthdateEditText.getText().toString();
+
+        Birthday birthday = new Birthday(name, birthdate);
+
+        try (FileWriter writer = new FileWriter(new File(context.getFilesDir(), BIRTHDAYS_FILENAME), true)) {
+            writer.append(birthday.getName()).append(",").append(birthday.getBirthdate()).append("\n");
+            Toast.makeText(context, "День рождения добавлен", Toast.LENGTH_SHORT).show();
+        } catch (IOException e) {
+            Toast.makeText(context, "Ошибка записи в файл", Toast.LENGTH_SHORT).show();
+            Log.e(TAG, "addBirthday: Ошибка записи в файл", e);
+        }
+    }
+
+    public void savePersonToFile(Context context, String name, String surname, String company, String birthday) {
+        // Create a new Person object
+        Person person = new Person(name, surname, company, birthday);
+
+        try {
+            // Get the file directory
+            File fileDir = context.getFilesDir();
+
+            // Create a new file in the directory with a unique name
+            String fileName = "birthday_list_" + System.currentTimeMillis() + ".txt";
+            File file = new File(fileDir, fileName);
+
+            // Create a new FileWriter object to write to the file
+            FileWriter writer = new FileWriter(file);
+
+            // Write the data to the file
+            writer.write(person.toString());
+
+            // Close the FileWriter object
+            writer.close();
+
+            // Display success message
+            Toast.makeText(context, "Person added to the list", Toast.LENGTH_SHORT).show();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toast.makeText(context, "Error: Person could not be added to the list", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public class BirthdayAdapter extends RecyclerView.Adapter<BirthdayAdapter.BirthdayViewHolder> {
+
+        private List<Birthday> birthdayList;
+
+        public BirthdayAdapter(List<Birthday> birthdayList) {
+            this.birthdayList = birthdayList;
+        }
+        public class MainActivity extends AppCompatActivity {
+
+            private static final String TAG = "MainActivity";
+
+            @Override
+            protected void onCreate(Bundle savedInstanceState) {
+                super.onCreate(savedInstanceState);
+                setContentView(R.layout.activity_main);
+
+                // вызов метода для отображения списка дней рождения
+                viewBirthdayList();
+
+                // вызов метода для чтения файлов и создания объектов PersonInfo
+                readFiles();
+            }
+
+            // Адаптер для RecyclerView
+            public static class BirthdayAdapter extends RecyclerView.Adapter<BirthdayAdapter.BirthdayViewHolder> {
+
+                private List<String> birthdayList;
+
+                public BirthdayAdapter(List<String> birthdayList) {
+                    this.birthdayList = birthdayList;
+                }
+
+                @NonNull
+                @Override
+                public BirthdayViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+                    View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_birthday, parent, false);
+                    return new BirthdayViewHolder(view);
+                }
+
+                @Override
+                public void onBindViewHolder(@NonNull BirthdayViewHolder holder, int position) {
+                    // Получаем день рождения из списка и устанавливаем значения в соответствующие поля ViewHolder
+                    String birthday = birthdayList.get(position);
+                    holder.nameTextView.setText(birthday.split(",")[0]);
+                    holder.birthdateTextView.setText(birthday.split(",")[1]);
+                }
+
+                @Override
+                public int getItemCount() {
+                    // Возвращаем количество элементов в списке дней рождения
+                    return birthdayList.size();
+                }
+
+                public static class BirthdayViewHolder extends RecyclerView.ViewHolder {
+
+                    private TextView nameTextView;
+                    private TextView birthdateTextView;
+
+                    public BirthdayViewHolder(View itemView) {
+                        super(itemView);
+                        nameTextView = itemView.findViewById(R.id.nameTextView);
+                        birthdateTextView = itemView.findViewById(R.id.birthdateTextView);
+                    }
+                }
+            }
+
+            // Scanner class for reading data from file
+            class FileScanner {
+                private Scanner scanner;
+
+                public FileScanner(File file) throws FileNotFoundException {
+                    this.scanner = new Scanner(file);
+                }
+
+                public String nextLine() {
+                    if (scanner.hasNextLine()) {
+                        return scanner.nextLine();
+                    }
+                    return null;
+                }
+
+                public boolean hasNextLine() {
+                    return scanner.hasNextLine();
+                }
+
+                public void close() {
+                    scanner.close();
+                }
+            }
+
+            private void viewBirthdayList() {
+                try {
+                    // Создаем FileScanner для чтения данных из файла
+                    FileScanner scanner = new FileScanner(new File(getFilesDir(), "birthdays.txt"));
+
+                    List<String> birthdayList = new ArrayList<>();
+                    // Считываем строки из файла и добавляем их в список дней рождения
+                    while (scanner.hasNextLine()) {
+                        String line = scanner.nextLine();
+                        birthdayList.add(line);
+                    }
+                    Log.d(TAG, "viewBirthdayList: " + birthdayList);
+
+                    // Используем RecyclerView для отображения списка дней рождения
+                    RecyclerView recyclerView = findViewById(R.id.recyclerview_birthday);
+                    BirthdayAdapter adapter = new BirthdayAdapter(birthdayList);
+                    recyclerView.setAdapter(adapter);
+                    recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+// Закрываем Scanner после использования
+                    scanner.close();
+
+                } catch (FileNotFoundException e) {
+                    Log.e(TAG, "viewBirthdayList: Файл birthdays.txt не найден", e);
+                }
+
+                private void readFiles() {
+                    List<PersonInfo> people = new ArrayList<>();
+
+// Получаем все файлы в директории
+                    File[] files = getFilesDir().listFiles();
+
+// Читаем данные из каждого файла и создаем объект PersonInfo
+                    for (File file : files) {
+                        try (Scanner scanner = new Scanner(file)) {
+                            String line = scanner.nextLine();
+
+                            // Создаем новый объект PersonInfo
+                            String[] parts = line.split(",");
+                            String name = parts[0];
+                            String surname = parts[1];
+                            String company = parts[2];
+                            String birthday = parts[3];
+
+                            PersonInfo person = new PersonInfo(name, surname, company, birthday);
+                            people.add(person);
+                        } catch (FileNotFoundException e) {
+                            Log.e(TAG, "readFiles: Файл " + file.getAbsolutePath() + " не найден", e);
+                        }
+                    }
+
+// Создаем новый Intent для запуска BirthdayListDisplayActivity
+                    Intent intent = new Intent(this, BirthdayListDisplayActivity.class);
+
+// Добавляем ArrayList в качестве дополнительной информации в Intent
+                    intent.putParcelableArrayListExtra("people", new ArrayList<>(people));
+
+// Запускаем BirthdayListDisplayActivity
+                    startActivity(intent);
+                }
+
+                public class BirthdayAdapter extends RecyclerView.Adapter<BirthdayAdapter.BirthdayViewHolder> {
+                    private List<PersonInfo> birthdayList;
+
+                    public BirthdayAdapter(List<PersonInfo> birthdayList) {
+                        this.birthdayList = birthdayList;
+                    }
+
+                    @NonNull
+                    @Override
+                    public BirthdayViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+                        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_birthday, parent, false);
+                        return new BirthdayViewHolder(view);
+                    }
+
+                    @Override
+                    public void onBindViewHolder(@NonNull BirthdayViewHolder holder, int position) {
+                        PersonInfo person = birthdayList.get(position);
+                        holder.nameTextView.setText(person.getName() + " " + person.getSurname());
+                        holder.birthdateTextView.setText(person.getBirthday());
+                    }
+
+                    @Override
+                    public int getItemCount() {
+                        return birthdayList.size();
+                    }
+
+                    public static class BirthdayViewHolder extends RecyclerView.ViewHolder {
+
+                        private TextView nameTextView;
+                        private TextView birthdateTextView;
+
+                        public BirthdayViewHolder(View itemView) {
+                            super(itemView);
+                            nameTextView = itemView.findViewById(R.id.textview_name);
+                            birthdateTextView = itemView.findViewById(R.id.textview_birthdate);
+                        }
+                    }
+                }
