@@ -1,0 +1,103 @@
+package com.example.chatgptprojectappv11;
+
+import static android.content.ContentValues.TAG;
+
+import android.content.Context;
+import android.util.Log;
+
+import androidx.annotation.NonNull;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.List;
+import java.util.Objects;
+
+public class PersonInfo {
+    private String name;
+    private String surname;
+    private String company;
+    private String birthday;
+
+    public PersonInfo(String john, String doe, int i) {
+    }
+
+    public PersonInfo(String name, String surname, String company, String birthday) {
+        this.name = name;
+        this.surname = surname;
+        this.company = company;
+        this.birthday = birthday;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getSurname() {
+        return surname;
+    }
+
+    public void setSurname(String surname) {
+        this.surname = surname;
+    }
+
+    public String getCompany() {
+        return company;
+    }
+
+    public void setCompany(String company) {
+        this.company = company;
+    }
+
+    public String getBirthday() {
+        return birthday;
+    }
+
+    public void setBirthday(String birthday) {
+        this.birthday = birthday;
+    }
+
+    private void writePeopleToFile(List<PersonInfo> people, Context context) {
+        try {
+            File file = new File(context.getFilesDir(), "birthdays.txt");
+            FileWriter writer = new FileWriter(file, true); // open file for append
+            for (PersonInfo person : people) {
+                writer.write(person.getName() + "," + person.getSurname() + "," +
+                        person.getCompany() + "," + person.getBirthday() + "\n");
+            }
+            writer.close(); // close file
+        } catch (IOException e) {
+            Log.e(TAG, "writePeopleToFile: Error writing to file", e);
+        }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PersonInfo that = (PersonInfo) o;
+        return Objects.equals(name, that.name) &&
+                Objects.equals(surname, that.surname) &&
+                Objects.equals(company, that.company) &&
+                Objects.equals(birthday, that.birthday);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, surname, company, birthday);
+    }
+
+    @NonNull
+    @Override
+    public String toString() {
+        return "PersonInfo{" +
+                "name='" + name + '\'' +
+                ", surname='" + surname + '\'' +
+                ", company='" + company + '\'' +
+                ", birthday='" + birthday + '\'' +
+                '}';
+    }}
