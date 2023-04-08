@@ -434,11 +434,6 @@ public class BirthdayListActivity extends AppCompatActivity {
 
 
 
-
-// Добавляем ArrayList в качестве дополнительной информации в Intent
-                Intent person1 = intent.putParcelableArrayListExtra("Person", (ArrayList<? extends Parcelable>) new ArrayList<MyPerson>(people));
-
-
                 // Запускаем BirthdayListDisplayActivity
                 startActivity(intent);
             } catch (FileNotFoundException e) {
