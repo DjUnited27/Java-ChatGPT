@@ -41,7 +41,7 @@ public class BirthdayListActivity extends AppCompatActivity {
     RecyclerView recyclerView;
     BirthdayAdapter adapter;
 
-    ArrayList<Person> people;
+    ArrayList<MyPerson> people;
 
     private static final String BIRTHDAYS_FILENAME = "birthdays.txt";
     private EditText editTextName, editTextSurname, editTextCompany, editTextBirthday;
@@ -189,11 +189,11 @@ public class BirthdayListActivity extends AppCompatActivity {
         }
     }
     //Person person = new Person();
-    Person person = new MyPerson("name", "surname", "company", "birthdate");
+    MyPerson person = new MyPerson("name", "surname", "company", "birthdate");
 
     public void savePersonToFile(Context context, String name, String surname, String company, String birthday) {
         // Create a new Person object
-        Person person = new Person(name, surname, company, birthday);
+        MyPerson person = new MyPerson(name, surname, company, birthday);
 
         try {
             // Get the file directory
@@ -431,8 +431,7 @@ public class BirthdayListActivity extends AppCompatActivity {
                 Intent intent = new Intent(this, BirthdayListDisplayActivity.class);
 
 // Добавляем ArrayList в качестве дополнительной информации в Intent
-                intent.putParcelableArrayListExtra("Person", new ArrayList<>(people));
-
+                Intent person1 = intent.putParcelableArrayListExtra("Person", new ArrayList<>(people));
 
 
                 // Запускаем BirthdayListDisplayActivity
