@@ -1,11 +1,12 @@
 package com.example.chatgptprojectappv11;
 
+import android.os.Bundle;
+import android.os.Parcelable;
+import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
-import android.os.Bundle;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +22,7 @@ public class BirthdayListDisplayActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_birthday_list_display);
 
-        recyclerView = findViewById(R.id.recyclerview_birthday_list);
+        recyclerView = findViewById(R.id.recyclerview_birthday);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
@@ -30,12 +31,13 @@ public class BirthdayListDisplayActivity extends AppCompatActivity {
         // Получаем Intent и проверяем, содержит ли он ArrayList
         if (getIntent().hasExtra("Person")) {
             // Получаем ArrayList из Intent
-            ArrayList<Birthday> receivedList = getIntent().getParcelableArrayListExtra("Person");
+            ArrayList<? extends Parcelable> receivedList = getIntent().getParcelableArrayListExtra("Person");
+
 
             // Добавляем элементы ArrayList в birthdayList
             for (int i = 0; i < receivedList.size(); i++) {
-                Birthday birthday = new Birthday(receivedList.get(i).getName(), receivedList.get(i).getSurname(),
-                        receivedList.get(i).getCompany(), receivedList.get(i).getBirthday());
+                Birthday birthday = (Birthday) receivedList.get(i);
+
                 birthdayList.add(birthday);
             }
         } else {
