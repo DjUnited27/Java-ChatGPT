@@ -38,6 +38,11 @@ import java.util.Scanner;
 
 public class BirthdayListActivity extends AppCompatActivity {
 
+    RecyclerView recyclerView;
+    BirthdayAdapter adapter;
+
+    ArrayList<Person> people;
+
     private static final String BIRTHDAYS_FILENAME = "birthdays.txt";
     private EditText editTextName, editTextSurname, editTextCompany, editTextBirthday;
     private Context context;
@@ -49,6 +54,8 @@ public class BirthdayListActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_birthday_list);
+
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         editTextName = findViewById(R.id.edit_text_name);
         editTextSurname = findViewById(R.id.edit_text_surname);
@@ -164,8 +171,8 @@ public class BirthdayListActivity extends AppCompatActivity {
             return birthdate;
         }
     }
-    
-    
+
+
 
     public void addBirthday(Context context, EditText nameEditText, EditText birthdateEditText) {
         String name = nameEditText.getText().toString();
@@ -399,7 +406,7 @@ public class BirthdayListActivity extends AppCompatActivity {
                 }
 
                 // Читаем данные из каждого файла и создаем объект PersonInfo
-                int people = 0;
+
                 for (File file : files[0]) {
                     try (Scanner scanner2 = new Scanner(file)) {
                         String line = scanner.nextLine();
@@ -411,8 +418,10 @@ public class BirthdayListActivity extends AppCompatActivity {
                         String company = parts[2];
                         String birthday = parts[3];
 
+                        List<PersonInfo> people = new ArrayList<>();
                         PersonInfo person = new PersonInfo(name, surname, company, birthday);
                         people.add(person);
+
                     } catch (FileNotFoundException e) {
                         Log.e(TAG, "readFiles: Файл " + file.getAbsolutePath() + " не найден", e);
                     }
