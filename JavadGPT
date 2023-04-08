@@ -35,13 +35,12 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Scanner;
 
-
 public class BirthdayListActivity extends AppCompatActivity {
-
 
     private static final String BIRTHDAYS_FILENAME = "birthdays.txt";
     private EditText editTextName, editTextSurname, editTextCompany, editTextBirthday;
     private Context context;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -82,7 +81,8 @@ public class BirthdayListActivity extends AppCompatActivity {
                     }
 
                     // Процесс форматирования даты с использованием SimpleDateFormat
-                    if (clean.equals(cleanC)) sel--;
+                    if (clean.equals(cleanC))
+                        sel--;
 
                     if (clean.length() < 8) {
                         clean += ddmmyyyy.substring(clean.length());
@@ -91,7 +91,8 @@ public class BirthdayListActivity extends AppCompatActivity {
                         int mon = Integer.parseInt(clean.substring(2, 4));
                         int year = Integer.parseInt(clean.substring(4, 8));
 
-                        if (mon > 12) mon = 12;
+                        if (mon > 12)
+                            mon = 12;
                         cal.set(Calendar.MONTH, mon - 1);
                         year = (year < 1900) ? 1900 : (year > 2100) ? 2100 : year;
                         cal.set(Calendar.YEAR, year);
@@ -108,13 +109,13 @@ public class BirthdayListActivity extends AppCompatActivity {
                 }
             }
 
-
             @Override
             public void afterTextChanged(Editable editable) {
 
             }
         });
     }
+
     public void readBirthdays(Context context) {
         List<Birthday> birthdaysList = new ArrayList<>();
         try (Scanner scanner = new Scanner(new File(context.getFilesDir(), BIRTHDAYS_FILENAME))) {
@@ -164,7 +165,6 @@ public class BirthdayListActivity extends AppCompatActivity {
             // Write the data to the file
             writer.write(person.toString());
 
-
             // Close the FileWriter object
             writer.close();
 
@@ -196,161 +196,192 @@ public class BirthdayListActivity extends AppCompatActivity {
         return list;
     }
 
+    private List<Birthday> birthdayList;
 
-    public class BirthdayAdapter extends RecyclerView.Adapter<BirthdayAdapter.BirthdayViewHolder> {
+    public void BirthdayAdapter(List<Birthday> birthdayList) {
+        this.birthdayList = birthdayList;
+    }
 
-        private List<Birthday> birthdayList;
+    public static class BirthdayViewHolder extends RecyclerView.ViewHolder {
+        // Add ViewHolder implementation here
+        public BirthdayViewHolder(View itemView) {
+            super(itemView);
+        }
+    }
 
-        public BirthdayAdapter(List<Birthday> birthdayList) {
-            this.birthdayList = birthdayList;
+    // Override onCreateViewHolder, onBindViewHolder and getItemCount methods here
+    // ...
+
+    public class MainActivity extends AppCompatActivity {
+
+        private static final String TAG = "MainActivity";
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            setContentView(R.layout.activity_birthday_list);
+
+            // вызов метода для отображения списка дней рождения
+            viewBirthdayList();
+
+            // вызов метода для чтения файлов и создания объектов PersonInfo
+            readFiles();
         }
 
-        public interface BirthdayViewHolder {
-        }
+        // Адаптер для RecyclerView
+        public static class BirthdayAdapter extends RecyclerView.Adapter<BirthdayAdapter.BirthdayViewHolder> {
 
-        public class MainActivity extends AppCompatActivity {
+            private List<String> birthdayList;
 
-            private static final String TAG = "MainActivity";
+            public BirthdayAdapter(List<String> birthdayList) {
+                this.birthdayList = birthdayList;
+            }
+
+            @NonNull
+            @Override
+            public BirthdayViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+                View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_birthday, parent, false);
+                return new BirthdayViewHolder(view);
+            }
 
             @Override
-            protected void onCreate(Bundle savedInstanceState) {
-                super.onCreate(savedInstanceState);
-                setContentView(R.layout.activity_birthday_list);
-
-                // вызов метода для отображения списка дней рождения
-                viewBirthdayList();
-
-                // вызов метода для чтения файлов и создания объектов PersonInfo
-                readFiles();
+            public void onBindViewHolder(@NonNull BirthdayViewHolder holder, int position) {
+                // Получаем день рождения из списка и устанавливаем значения в соответствующие
+                // поля ViewHolder
+                String birthday = birthdayList.get(position);
+                holder.nameTextView.setText(birthday.split(",")[0]);
+                holder.birthdateTextView.setText(birthday.split(",")[1]);
             }
 
-            // Адаптер для RecyclerView
-            public static class BirthdayAdapter extends RecyclerView.Adapter<BirthdayAdapter.BirthdayViewHolder> {
-
-                private List<String> birthdayList;
-
-                public BirthdayAdapter(List<String> birthdayList) {
-                    this.birthdayList = birthdayList;
-                }
-
-                @NonNull
-                @Override
-                public BirthdayViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-                    View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_birthday, parent, false);
-                    return new BirthdayViewHolder(view);
-                }
-
-                @Override
-                public void onBindViewHolder(@NonNull BirthdayViewHolder holder, int position) {
-                    // Получаем день рождения из списка и устанавливаем значения в соответствующие поля ViewHolder
-                    String birthday = birthdayList.get(position);
-                    holder.nameTextView.setText(birthday.split(",")[0]);
-                    holder.birthdateTextView.setText(birthday.split(",")[1]);
-                }
-
-                @Override
-                public int getItemCount() {
-                    // Возвращаем количество элементов в списке дней рождения
-                    return birthdayList.size();
-                }
-
-                public static class BirthdayViewHolder extends RecyclerView.ViewHolder {
-
-                    private TextView nameTextView;
-                    private TextView birthdateTextView;
-
-                    public BirthdayViewHolder(View itemView) {
-                        super(itemView);
-                        nameTextView = itemView.findViewById(R.id.nameTextView);
-                        birthdateTextView = itemView.findViewById(R.id.birthdateTextView);
-                    }
-                }
+            @Override
+            public int getItemCount() {
+                // Возвращаем количество элементов в списке дней рождения
+                return birthdayList.size();
             }
 
-            // Scanner class for reading data from file
-            class FileScanner {
-                private Scanner scanner;
+            public static class BirthdayViewHolder extends RecyclerView.ViewHolder {
 
-                public FileScanner(File file) throws FileNotFoundException {
-                    this.scanner = new Scanner(file);
-                }
+                private TextView nameTextView;
+                private TextView birthdateTextView;
 
-                public String nextLine() {
-                    if (scanner.hasNextLine()) {
-                        return scanner.nextLine();
-                    }
-                    return null;
-                }
-
-                public boolean hasNextLine() {
-                    return scanner.hasNextLine();
-                }
-
-                public void close() {
-                    scanner.close();
+                public BirthdayViewHolder(View itemView) {
+                    super(itemView);
+                    nameTextView = itemView.findViewById(R.id.nameTextView);
+                    birthdateTextView = itemView.findViewById(R.id.birthdateTextView);
                 }
             }
+        }
 
-            private void viewBirthdayList() {
-                try {
-                    // Создаем FileScanner для чтения данных из файла
-                    FileScanner scanner = new FileScanner(new File(getFilesDir(), "birthdays.txt"));
+        // Scanner class for reading data from file
+        class FileScanner {
+            private Scanner scanner;
 
-                    List<String> birthdayList = new ArrayList<>();
-                    // Считываем строки из файла и добавляем их в список дней рождения
-                    while (scanner.hasNextLine()) {
-                        String line = scanner.nextLine();
-                        birthdayList.add(line);
-                    }
-                    Log.d(TAG, "viewBirthdayList: " + birthdayList);
+            public FileScanner(File file) throws FileNotFoundException {
+                this.scanner = new Scanner(file);
+            }
 
-                    // Используем RecyclerView для отображения списка дней рождения
-                    RecyclerView recyclerView = findViewById(R.id.recyclerview_birthday);
-                    BirthdayAdapter adapter = new BirthdayAdapter(birthdayList);
-                    recyclerView.setAdapter(adapter);
-                    recyclerView.setLayoutManager(new LinearLayoutManager(this));
-
-// Закрываем Scanner после использования
-                    scanner.close();
-
-                } catch (FileNotFoundException e) {
-                    Log.e(TAG, "viewBirthdayList: Файл birthdays.txt не найден", e);
+            public String nextLine() {
+                if (scanner.hasNextLine()) {
+                    return scanner.nextLine();
                 }
+                return null;
+            }
 
-                private void readFiles;() {
-                    List<PersonInfo> people = new ArrayList<>();
+            public boolean hasNextLine() {
+                return scanner.hasNextLine();
+            }
 
-// Получаем все файлы в директории
-                    File[] files = getFilesDir().listFiles();
+            public void close() {
+                scanner.close();
+            }
+        }
 
-// Читаем данные из каждого файла и создаем объект PersonInfo
-                    for (File file : files) {
-                        try (Scanner scanner = new Scanner(file)) {
-                            String line = scanner.nextLine();
+        private void viewBirthdayList() {
+            try {
+                // Создаем FileScanner для чтения данных из файла
+                FileScanner scanner = new FileScanner(new File(getFilesDir(), "birthdays.txt"));
 
-                            // Создаем новый объект PersonInfo
-                            String[] parts = line.split(",");
-                            String name = parts[0];
-                            String surname = parts[1];
-                            String company = parts[2];
-                            String birthday = parts[3];
+                List<String> birthdayList = new ArrayList<>();
+                // Считываем строки из файла и добавляем их в список дней рождения
+                while (scanner.hasNextLine()) {
+                    String line = scanner.nextLine();
+                    birthdayList.add(line);
+                }
+                Log.d(TAG, "viewBirthdayList: " + birthdayList);
 
-                            PersonInfo person = new PersonInfo(name, surname, company, birthday);
-                            people.add(person);
+                // Используем RecyclerView для отображения списка дней рождения
+                RecyclerView recyclerView = findViewById(R.id.recyclerview_birthday);
+                BirthdayAdapter adapter = new BirthdayAdapter(birthdayList);
+                recyclerView.setAdapter(adapter);
+                recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+                public class MyClass {
+
+                    /**
+                     * Просмотреть список дней рождений
+                     */
+                    private void viewBirthdayList() {
+                        try {
+                            File file = new File(getFilesDir(), "birthdays.txt");
+                            Scanner scanner = new Scanner(file);
+                            List<PersonInfo> people = new ArrayList<>();
+                            while (scanner.hasNextLine()) {
+                                String line = scanner.nextLine();
+                                String[] parts = line.split(",");
+                                String name = parts[0];
+                                String surname = parts[1];
+                                String company = parts[2];
+                                String birthday = parts[3];
+                                PersonInfo person = new PersonInfo(name, surname, company, birthday);
+                                people.add(person);
+                            }
+                            scanner.close();
                         } catch (FileNotFoundException e) {
-                            Log.e(TAG, "readFiles: Файл " + file.getAbsolutePath() + " не найден", e);
+                            Log.e(TAG, "viewBirthdayList: Файл birthdays.txt не найден", e);
                         }
                     }
 
-// Создаем новый Intent для запуска BirthdayListDisplayActivity
-                    Intent intent = new Intent(this, BirthdayListDisplayActivity.class);
+                    /**
+                     * Чтение файлов
+                     */
+                    private void readFiles() {
+                        List<PersonInfo> people = new ArrayList<>();
 
-// Добавляем ArrayList в качестве дополнительной информации в Intent
-                    intent.putParcelableArrayListExtra("people", new ArrayList<>(people));
+                        // Получаем все файлы в директории
+                        File[] files = this.getFilesDir().listFiles();
 
-// Запускаем BirthdayListDisplayActivity
-                    startActivity(intent);
+                        // some code
+                    }
                 }
+
+                // Читаем данные из каждого файла и создаем объект PersonInfo
+                for (File file : files) {
+                    try (Scanner scanner = new Scanner(file)) {
+                        String line = scanner.nextLine();
+
+                        // Создаем новый объект PersonInfo
+                        String[] parts = line.split(",");
+                        String name = parts[0];
+                        String surname = parts[1];
+                        String company = parts[2];
+                        String birthday = parts[3];
+
+                        PersonInfo person = new PersonInfo(name, surname, company, birthday);
+                        people.add(person);
+                    } catch (FileNotFoundException e) {
+                        Log.e(TAG, "readFiles: Файл " + file.getAbsolutePath() + " не найден", e);
+                    }
+                }
+
+                // Создаем новый Intent для запуска BirthdayListDisplayActivity
+                Intent intent = new Intent(this, BirthdayListDisplayActivity.class);
+
+                // Добавляем ArrayList в качестве дополнительной информации в Intent
+                intent.putParcelableArrayListExtra("people", new ArrayList<>(people));
+
+                // Запускаем BirthdayListDisplayActivity
+                startActivity(intent);
+            } catch (FileNotFoundException e) {
 
                 public class BirthdayAdapter extends RecyclerView.Adapter<BirthdayAdapter.BirthdayViewHolder> {
                     private List<PersonInfo> birthdayList;
@@ -362,7 +393,8 @@ public class BirthdayListActivity extends AppCompatActivity {
                     @NonNull
                     @Override
                     public BirthdayViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-                        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_birthday, parent, false);
+                        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_birthday, parent,
+                                false);
                         return new BirthdayViewHolder(view);
                     }
 
@@ -391,5 +423,9 @@ public class BirthdayListActivity extends AppCompatActivity {
                     }
                 }
 
-        public class BirthdayViewHolder {
+                public class BirthdayViewHolder {
+                }
+            }
         }
+    }
+}
