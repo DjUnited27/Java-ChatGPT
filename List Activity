@@ -1,0 +1,51 @@
+package com.example.chatgptprojectappv11;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.os.Parcelable;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.widget.SearchView;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import java.util.ArrayList;
+
+public class ListActivity extends AppCompatActivity {
+
+    ListView listView;
+    ArrayList<PersonInfo> peopleList;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_list);
+
+        listView = findViewById(R.id.list_view);
+
+        // Получаем список людей из Intent, переданный из BirthdayListActivity
+        Intent intent = getIntent();
+        ArrayList<Parcelable> personList = intent.getParcelableArrayListExtra("personList");
+
+
+        // Здесь передаем полученный список людей в адаптер
+        ArrayAdapter<PersonInfo> listAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, peopleList);
+        listView.setAdapter(listAdapter);
+
+        // Добавляем обработчик для поиска по дню, месяцу и компании
+        SearchView searchView = findViewById(R.id.search_view);
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                // Обновляем список при изменении текста в поисковом поле
+                listAdapter.getFilter().filter(newText);
+                return true;
+            }
+        });
+    }
+}
