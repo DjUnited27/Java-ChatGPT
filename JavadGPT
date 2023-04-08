@@ -177,7 +177,7 @@ public class BirthdayListActivity extends AppCompatActivity {
         }
     }
 
-    private ArrayList<PersonInfo> readFiles(Context context) {
+    private ArrayList<PersonInfo> readFiles() {
         ArrayList<PersonInfo> list = new ArrayList<>();
         try {
             InputStream is = context.getAssets().open("birthdays.txt");
@@ -229,7 +229,7 @@ public class BirthdayListActivity extends AppCompatActivity {
         }
 
         // Адаптер для RecyclerView
-        public static class BirthdayAdapter extends RecyclerView.Adapter<BirthdayAdapter.BirthdayViewHolder> {
+        class BirthdayAdapter extends RecyclerView.Adapter<BirthdayAdapter.BirthdayViewHolder> {
 
             private List<String> birthdayList;
 
@@ -352,6 +352,10 @@ public class BirthdayListActivity extends AppCompatActivity {
 
                         // some code
                     }
+
+                    private File getFilesDir() {
+                        return null;
+                    }
                 }
 
                 // Читаем данные из каждого файла и создаем объект PersonInfo
@@ -377,13 +381,13 @@ public class BirthdayListActivity extends AppCompatActivity {
                 Intent intent = new Intent(this, BirthdayListDisplayActivity.class);
 
                 // Добавляем ArrayList в качестве дополнительной информации в Intent
-                intent.putParcelableArrayListExtra("people", new ArrayList<>(people));
+                intent.putParcelableArrayListExtra("Person", new ArrayList<>(Person));
 
                 // Запускаем BirthdayListDisplayActivity
                 startActivity(intent);
             } catch (FileNotFoundException e) {
 
-                public class BirthdayAdapter extends RecyclerView.Adapter<BirthdayAdapter.BirthdayViewHolder> {
+                 class BirthdayAdapter extends RecyclerView.Adapter<BirthdayAdapter.BirthdayViewHolder> {
                     private List<PersonInfo> birthdayList;
 
                     public BirthdayAdapter(List<PersonInfo> birthdayList) {
@@ -410,7 +414,7 @@ public class BirthdayListActivity extends AppCompatActivity {
                         return birthdayList.size();
                     }
 
-                    public static class BirthdayViewHolder extends RecyclerView.ViewHolder {
+                    class BirthdayViewHolder extends RecyclerView.ViewHolder {
 
                         private TextView nameTextView;
                         private TextView birthdateTextView;
@@ -422,9 +426,7 @@ public class BirthdayListActivity extends AppCompatActivity {
                         }
                     }
                 }
-
-                public class BirthdayViewHolder {
-                }
+                
             }
         }
     }
