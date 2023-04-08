@@ -1,0 +1,48 @@
+package com.example.chatgptprojectappv11;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import android.os.Bundle;
+import android.widget.Toast;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class BirthdayListDisplayActivity extends AppCompatActivity {
+
+    private RecyclerView recyclerView;
+    private BirthdayAdapter adapter;
+    private List<Birthday> birthdayList;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_birthday_list_display);
+
+        recyclerView = findViewById(R.id.recyclerview_birthday_list);
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        birthdayList = new ArrayList<>();
+
+        // Получаем Intent и проверяем, содержит ли он ArrayList
+        if (getIntent().hasExtra("Person")) {
+            // Получаем ArrayList из Intent
+            ArrayList<Birthday> receivedList = getIntent().getParcelableArrayListExtra("Person");
+
+            // Добавляем элементы ArrayList в birthdayList
+            for (int i = 0; i < receivedList.size(); i++) {
+                Birthday birthday = new Birthday(receivedList.get(i).getName(), receivedList.get(i).getSurname(),
+                        receivedList.get(i).getCompany(), receivedList.get(i).getBirthday());
+                birthdayList.add(birthday);
+            }
+        } else {
+            Toast.makeText(this, "No data received", Toast.LENGTH_SHORT).show();
+        }
+
+        adapter = new BirthdayAdapter(birthdayList);
+        recyclerView.setAdapter(adapter);
+    }
+}
