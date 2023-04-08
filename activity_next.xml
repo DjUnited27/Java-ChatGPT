@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <Button
+        android:id="@+id/button_add_birthday_date"
+        android:layout_width="250dp"
+        android:layout_height="50dp"
+        android:onClick="AddanewBirthdaydate"
+        android:text="Add a new Birthday date"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.496"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.326"
+        tools:ignore="MissingConstraints,TextSizeCheck,VisualLintOverlap" />
+
+    <Button
+        android:id="@+id/button_go_to_list"
+        android:layout_width="250dp"
+        android:layout_height="50dp"
+        android:onClick="goToList"
+        android:text="Go to List"
+        app:layout_constraintTop_toBottomOf="@+id/button_add_birthday_date"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintVertical_bias="0.2"
+        tools:ignore="MissingConstraints,TextSizeCheck,VisualLintOverlap" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="16dp"
+        tools:layout_editor_absoluteX="0dp"
+        tools:layout_editor_absoluteY="0dp">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:layout_gravity="top"
+            android:background="@color/purple_500" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:layout_gravity="bottom"
+            android:background="@color/purple_500" />
+
+        <View
+            android:layout_width="2dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="left"
+            android:background="@color/purple_500"
+            tools:ignore="RtlHardcoded" />
+
+        <View
+            android:layout_width="2dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="right"
+            android:background="@color/purple_500"
+            tools:ignore="RtlHardcoded" />
+
+        <!-- Your layout here -->
+
+    </FrameLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
