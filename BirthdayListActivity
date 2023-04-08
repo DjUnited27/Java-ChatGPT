@@ -20,6 +20,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.io.BufferedReader;
@@ -40,6 +41,9 @@ public class BirthdayListActivity extends AppCompatActivity {
     private static final String BIRTHDAYS_FILENAME = "birthdays.txt";
     private EditText editTextName, editTextSurname, editTextCompany, editTextBirthday;
     private Context context;
+    private String surname;
+    private String company;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -131,6 +135,37 @@ public class BirthdayListActivity extends AppCompatActivity {
             Log.e(TAG, "readBirthdays: Ошибка чтения файла", e);
         }
     }
+    public class MyPerson {
+        private String name;
+        private String surname;
+        private String company;
+        private String birthdate;
+
+        public MyPerson(String name, String surname, String company, String birthdate) {
+            this.name = name;
+            this.surname = surname;
+            this.company = company;
+            this.birthdate = birthdate;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getSurname() {
+            return surname;
+        }
+
+        public String getCompany() {
+            return company;
+        }
+
+        public String getBirthdate() {
+            return birthdate;
+        }
+    }
+    
+    
 
     public void addBirthday(Context context, EditText nameEditText, EditText birthdateEditText) {
         String name = nameEditText.getText().toString();
@@ -146,6 +181,8 @@ public class BirthdayListActivity extends AppCompatActivity {
             Log.e(TAG, "addBirthday: Ошибка записи в файл", e);
         }
     }
+    //Person person = new Person();
+    Person person = new MyPerson("name", "surname", "company", "birthdate");
 
     public void savePersonToFile(Context context, String name, String surname, String company, String birthday) {
         // Create a new Person object
@@ -187,7 +224,7 @@ public class BirthdayListActivity extends AppCompatActivity {
                 String[] parts = line.split(",");
                 String name = parts[0].trim();
                 String birthdate = parts[1].trim();
-                list.add(new PersonInfo(name, birthdate));
+                list.add(new PersonInfo(name,surname, company, birthdate ));
                 line = reader.readLine();
             }
         } catch (IOException e) {
@@ -259,15 +296,17 @@ public class BirthdayListActivity extends AppCompatActivity {
                 return birthdayList.size();
             }
 
-            public static class BirthdayViewHolder extends RecyclerView.ViewHolder {
+            public class BirthdayViewHolder extends RecyclerView.ViewHolder {
 
                 private TextView nameTextView;
                 private TextView birthdateTextView;
 
+
                 public BirthdayViewHolder(View itemView) {
                     super(itemView);
-                    nameTextView = itemView.findViewById(R.id.nameTextView);
-                    birthdateTextView = itemView.findViewById(R.id.birthdateTextView);
+                    nameTextView = (TextView) itemView.findViewById(R.id.textview_name);
+                    birthdateTextView = (TextView) itemView.findViewById(R.id.textview_birthdate);
+
                 }
             }
         }
@@ -315,7 +354,8 @@ public class BirthdayListActivity extends AppCompatActivity {
                 recyclerView.setAdapter(adapter);
                 recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-                public class MyClass {
+                final File[][] files = new File[1][1];
+                class MyClass {
 
                     /**
                      * Просмотреть список дней рождений
@@ -348,7 +388,7 @@ public class BirthdayListActivity extends AppCompatActivity {
                         List<PersonInfo> people = new ArrayList<>();
 
                         // Получаем все файлы в директории
-                        File[] files = this.getFilesDir().listFiles();
+                        files[0] = this.getFilesDir().listFiles();
 
                         // some code
                     }
@@ -359,8 +399,9 @@ public class BirthdayListActivity extends AppCompatActivity {
                 }
 
                 // Читаем данные из каждого файла и создаем объект PersonInfo
-                for (File file : files) {
-                    try (Scanner scanner = new Scanner(file)) {
+                int people = 0;
+                for (File file : files[0]) {
+                    try (Scanner scanner2 = new Scanner(file)) {
                         String line = scanner.nextLine();
 
                         // Создаем новый объект PersonInfo
@@ -380,8 +421,10 @@ public class BirthdayListActivity extends AppCompatActivity {
                 // Создаем новый Intent для запуска BirthdayListDisplayActivity
                 Intent intent = new Intent(this, BirthdayListDisplayActivity.class);
 
-                // Добавляем ArrayList в качестве дополнительной информации в Intent
-                intent.putParcelableArrayListExtra("Person", new ArrayList<>(Person));
+// Добавляем ArrayList в качестве дополнительной информации в Intent
+                intent.putParcelableArrayListExtra("Person", new ArrayList<>(people));
+
+
 
                 // Запускаем BirthdayListDisplayActivity
                 startActivity(intent);
@@ -426,8 +469,10 @@ public class BirthdayListActivity extends AppCompatActivity {
                         }
                     }
                 }
-                
+
             }
         }
     }
+
+    File file = new File(getFilesDir(), "birthday_list.txt");
 }
