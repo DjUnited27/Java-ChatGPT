@@ -50,7 +50,8 @@ public class BirthdayAdapter extends RecyclerView.Adapter<BirthdayAdapter.Birthd
             super(itemView);
 
             name = itemView.findViewById(R.id.textview_name);
-            surname = itemView.findViewById(R.id.textview_name);
+            surname = itemView.findViewById(R.id.textview_surname);
+            company = itemView.findViewById(R.id.textview_company);
             birthday = itemView.findViewById(R.id.textview_birthdate);
         }
     }
