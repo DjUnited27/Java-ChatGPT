@@ -1,0 +1,57 @@
+package com.example.chatgptprojectappv11;
+
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
+
+import java.util.List;
+
+public class BirthdayAdapter extends RecyclerView.Adapter<BirthdayAdapter.BirthdayViewHolder> {
+
+    private List<Birthday> birthdayList;
+
+    public BirthdayAdapter(List<Birthday> birthdayList) {
+        this.birthdayList = birthdayList;
+    }
+
+    @NonNull
+    @Override
+    public BirthdayViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_birthday, parent, false);
+        return new BirthdayViewHolder(view);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull BirthdayViewHolder holder, int position) {
+        Birthday birthday = birthdayList.get(position);
+        holder.name.setText(birthday.getName());
+        holder.surname.setText(birthday.getSurname());
+        holder.company.setText(birthday.getCompany());
+        holder.birthday.setText(birthday.getBirthday());
+    }
+
+    @Override
+    public int getItemCount() {
+        return birthdayList.size();
+    }
+
+    public static class BirthdayViewHolder extends RecyclerView.ViewHolder {
+
+        TextView name;
+        TextView surname;
+        TextView company;
+        TextView birthday;
+
+        public BirthdayViewHolder(@NonNull View itemView) {
+            super(itemView);
+
+            name = itemView.findViewById(R.id.textview_name);
+            surname = itemView.findViewById(R.id.textview_name);
+            birthday = itemView.findViewById(R.id.textview_birthdate);
+        }
+    }
+}
