@@ -1,6 +1,7 @@
 package com.example.chatgptprojectappv11;
 
-public class Person {
+public class Person implements PersonInfo {
+
     private String name;
     private String surname;
     private String birthday;
@@ -21,47 +22,24 @@ public class Person {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public String getSurname() {
         return surname;
-    }
-
-    public void setSurname(String surname) {
-        this.surname = surname;
     }
 
     public String getBirthday() {
         return birthday;
     }
 
-    public void setBirthday(String birthday) {
-        this.birthday = birthday;
-    }
-
     public String getBirthMonth() {
         return birthMonth;
-    }
-
-    public void setBirthMonth(String birthMonth) {
-        this.birthMonth = birthMonth;
     }
 
     public String getBirthYear() {
         return birthYear;
     }
 
-    public void setBirthYear(String birthYear) {
-        this.birthYear = birthYear;
-    }
-
     public String getCompany() {
         return company;
     }
 
-    public void setCompany(String company) {
-        this.company = company;
-    }
 }
