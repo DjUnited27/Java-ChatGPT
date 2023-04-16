@@ -1,26 +1,20 @@
 package com.example.chatgptprojectappv11;
 
-import static android.content.ContentValues.TAG;
 
 import android.content.Context;
 import android.util.Log;
-
-import androidx.annotation.NonNull;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.List;
 import java.util.Objects;
 
+
 public class PersonInfo {
+
     private String name;
     private String surname;
     private String company;
     private String birthday;
-
-    public PersonInfo(String john, String doe, int i) {
-    }
 
     public PersonInfo(String name, String surname, String company, String birthday) {
         this.name = name;
@@ -29,49 +23,18 @@ public class PersonInfo {
         this.birthday = birthday;
     }
 
-    public String getName() {
-        return name;
-    }
+    public void writePeopleToFile(Context context) {
+        try (FileWriter writer = new FileWriter(new File(context.getFilesDir(), "birthdays.txt"), true)) { // open file for append
+            StringBuilder builder = new StringBuilder();
+            builder.append(name).append(",")
+                    .append(surname).append(",")
+                    .append(company).append(",")
+                    .append(birthday)
+                    .append("\n");
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getSurname() {
-        return surname;
-    }
-
-    public void setSurname(String surname) {
-        this.surname = surname;
-    }
-
-    public String getCompany() {
-        return company;
-    }
-
-    public void setCompany(String company) {
-        this.company = company;
-    }
-
-    public String getBirthday() {
-        return birthday;
-    }
-
-    public void setBirthday(String birthday) {
-        this.birthday = birthday;
-    }
-
-    private void writePeopleToFile(List<PersonInfo> people, Context context) {
-        try {
-            File file = new File(context.getFilesDir(), "birthdays.txt");
-            FileWriter writer = new FileWriter(file, true); // open file for append
-            for (PersonInfo person : people) {
-                writer.write(person.getName() + "," + person.getSurname() + "," +
-                        person.getCompany() + "," + person.getBirthday() + "\n");
-            }
-            writer.close(); // close file
+            writer.write(builder.toString());
         } catch (IOException e) {
-            Log.e(TAG, "writePeopleToFile: Error writing to file", e);
+            Log.i("WriteToFile", "Error writing to file", e);
         }
     }
 
@@ -86,12 +49,12 @@ public class PersonInfo {
                 Objects.equals(birthday, that.birthday);
     }
 
+
     @Override
     public int hashCode() {
         return Objects.hash(name, surname, company, birthday);
     }
 
-    @NonNull
     @Override
     public String toString() {
         return "PersonInfo{" +
@@ -100,4 +63,37 @@ public class PersonInfo {
                 ", company='" + company + '\'' +
                 ", birthday='" + birthday + '\'' +
                 '}';
-    }}
+    }
+
+    public static void main(String[] args) {
+        PersonInfo person1 = new PersonInfo("John", "Doe", "Acme Inc.", "01/01/2000");
+        PersonInfo person2 = new PersonInfo("Jane", "Doe", "Acme Inc.", "02/02/2000");
+
+
+        Context context = null;
+        File file = new File(context.getFilesDir(), "birthdays.txt");
+        if (!file.exists()) {
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                Log.e("WriteToFile", "Error creating file", e);
+            }
+        }
+
+        // Write the people to the file
+        person1.writePeopleToFile(context);
+        person2.writePeopleToFile(context);
+    }
+
+    public int getBirthday() {
+        return 0;
+    }
+
+    public char[] getName() {
+        return new char[0];
+    }
+
+    public Object getSurname() {
+        return null;
+    }
+}
