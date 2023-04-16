@@ -167,24 +167,24 @@ public class BirthdayListActivity extends AppCompatActivity {
 
     private ArrayList<PersonInfo> readFiles(Context context) {
         ArrayList<PersonInfo> list = new ArrayList<>();
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try (InputStream is = context.getAssets().open("birthdays.txt");
-                     BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
-                    String line = reader.readLine();
-                    while (line != null) {
-                        String[] parts = line.split(",");
-                        String name = parts[0].trim();
-                        String birthdate = parts[1].trim();
-                        list.add(new Person(name, surname, birthday, birthMonth, birthYear, company));
-                        line = reader.readLine();
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+        try (InputStream is = context.getAssets().open("birthdays.txt");
+             BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
+            String line = reader.readLine();
+            while (line != null) {
+                String[] parts = line.split(",");
+                String name = parts[0].trim();
+                String birthdate = parts[1].trim();
+                String[] birthdateParts = birthdate.split("/");
+                String birthday = birthdateParts[0].trim();
+                String birthMonth = birthdateParts[1].trim();
+                String birthYear = birthdateParts[2].trim();
+                String company = parts[2].trim();
+                list.add(new Person(name, null, birthday, birthMonth, birthYear, company));
+                line = reader.readLine();
             }
-        }).start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return list;
     }
 
